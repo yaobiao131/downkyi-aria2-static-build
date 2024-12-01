@@ -9,6 +9,18 @@ set -o pipefail
 
 # value from: https://hub.docker.com/repository/docker/abcfy2/musl-cross-toolchain-ubuntu/tags
 
+case "${CROSS_HOST}" in
+aarch64-*linux*)
+  export OPENSSL_COMPILER=linux-aarch64
+  ;;
+x86_64-*linux*)
+  export OPENSSL_COMPILER=linux-x86_64
+  ;;
+*)
+  export OPENSSL_COMPILER=gcc
+  ;;
+esac
+
 retry() {
   # max retry 5 times
   try=5
@@ -178,7 +190,7 @@ prepare_ssl() {
   mkdir -p "/usr/src/openssl-${openssl_ver}"
   tar -zxf "${DOWNLOADS_DIR}/openssl-${openssl_ver}.tar.gz" --strip-components=1 -C "/usr/src/openssl-${openssl_ver}"
   cd "/usr/src/openssl-${openssl_ver}"
-  ./Configure -static --cross-compile-prefix="${CROSS_HOST}-" --prefix="${CROSS_PREFIX}" "${OPENSSL_COMPILER}" -c="${CC}" --openssldir=/etc/ssl
+  ./Configure -static --cross-compile-prefix="${CROSS_HOST}-" --prefix="${CROSS_PREFIX}" "${OPENSSL_COMPILER}" --openssldir=/etc/ssl
   make -j$(nproc)
   make install_sw
   openssl_ver="$(grep Version: "${CROSS_PREFIX}"/lib*/pkgconfig/openssl.pc)"
@@ -246,18 +258,6 @@ build_aria2() {
   echo >>"${BUILD_INFO}"
 }
 
-get_build_info() {
-  echo "============= ARIA2 VER INFO ==================="
-  ARIA2_VER_INFO="$("${RUNNER_CHECKER}" "${CROSS_PREFIX}/bin/aria2c"* --version 2>/dev/null)"
-  echo "${ARIA2_VER_INFO}"
-  echo "================================================"
-
-  echo "aria2 version info:" >>"${BUILD_INFO}"
-  echo '```txt' >>"${BUILD_INFO}"
-  echo "${ARIA2_VER_INFO}" >>"${BUILD_INFO}"
-  echo '```' >>"${BUILD_INFO}"
-}
-
 test_build() {
   # get release
   cp -fv "${CROSS_PREFIX}/bin/"aria2* "${SELF_DIR}"
@@ -272,7 +272,6 @@ if [ x"${TARGET_HOST}" = x"Linux" ]; then
 fi
 build_aria2
 
-get_build_info
 # mips test will hang, I don't know why. So I just ignore test failures.
 # test_build
 
