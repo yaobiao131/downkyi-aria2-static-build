@@ -74,8 +74,8 @@ rm -f /etc/apt/apt.conf.d/*
 echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/01keep-debs
 echo -e 'Acquire::https::Verify-Peer "false";\nAcquire::https::Verify-Host "false";' >/etc/apt/apt.conf.d/99-trust-https
 
-apt update
-apt install -y g++ \
+apt-get update
+apt-get install -y g++ \
   make \
   libtool \
   jq \
@@ -108,8 +108,8 @@ esac
 case "${TARGET_HOST}" in
 *"mingw"*)
   TARGET_HOST=Windows
-  apt update
-  apt install -y wine
+  apt-get update
+  apt-get install -y wine
   export WINEPREFIX=/tmp/
   RUNNER_CHECKER="wine"
   ;;
@@ -133,7 +133,7 @@ case "${TARGET_HOST}" in
   ;;
 *)
   TARGET_HOST=Linux
-  apt install -y "qemu-user-static"
+  apt-get install -y "qemu-user-static"
   RUNNER_CHECKER="qemu-${TARGET_ARCH}-static"
   ;;
 esac
